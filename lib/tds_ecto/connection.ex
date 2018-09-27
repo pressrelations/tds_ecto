@@ -900,6 +900,9 @@ if Code.ensure_loaded?(Tds) do
               [pref, table] ->
                 {quote_table(pref, table), name, model}
 
+              [database, pref, table] ->
+                {quote_table(database, pref, table), name, model}
+
               _ ->
                 error!(
                   nil,
@@ -1343,6 +1346,9 @@ if Code.ensure_loaded?(Tds) do
 
     defp quote_table(prefix, name),
       do: Enum.map_join([quote_table(prefix), ".", quote_table(name)], "", &"#{&1}")
+
+    defp quote_table(database, prefix, name),
+      do: Enum.map_join([quote_table(database), ".", quote_table(prefix), ".", quote_table(name)], "", &"#{&1}")
 
     defp quote_table(name) when is_atom(name), do: quote_table(Atom.to_string(name))
 
