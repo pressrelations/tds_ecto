@@ -273,10 +273,6 @@ if Code.ensure_loaded?(Tds) do
     end
 
     def insert(prefix, table, header, rows, on_conflict, returning) do
-      IO.inspect(prefix)
-      IO.inspect(table)
-      IO.inspect(quote_table(prefix, table))
-
       [] = on_conflict(on_conflict, header)
       values =
         if header == [] do
@@ -341,7 +337,7 @@ if Code.ensure_loaded?(Tds) do
           {"#{quote_name(field)} = @#{acc}", acc + 1}
         end)
 
-      "UPDATE #{quote_table(prefix, table)} SET " <>
+      "UPDATE #{table_name(prefix, table)} SET " <>
         Enum.join(fields, ", ") <>
         " " <> returning(returning, "INSERTED") <> "WHERE " <> Enum.join(filters, " AND ")
     end
@@ -352,7 +348,7 @@ if Code.ensure_loaded?(Tds) do
           {"#{quote_name(field)} = @#{acc}", acc + 1}
         end)
 
-      "DELETE FROM #{quote_table(prefix, table)}" <>
+      "DELETE FROM #{table_name(prefix, table)}" <>
         " " <> returning(returning, "DELETED") <> "WHERE " <> Enum.join(filters, " AND ")
     end
 
@@ -970,7 +966,7 @@ if Code.ensure_loaded?(Tds) do
         [
           if_table_not_exists(command == :create_if_not_exists, table.name, prefix),
           "CREATE TABLE ",
-          quote_table(prefix, table.name),
+          table_name(prefix, table.name),
           table_structure,
           engine_expr(table.engine),
           options_expr(table.options),
@@ -988,7 +984,7 @@ if Code.ensure_loaded?(Tds) do
         [
           if_table_exists(command == :drop_if_exists, table.name, prefix),
           "DROP TABLE ",
-          quote_table(prefix, table.name),
+          table_name(prefix, table.name),
           if_do(command == :drop_if_exists, "END ")
         ]
       ]
@@ -997,7 +993,7 @@ if Code.ensure_loaded?(Tds) do
     end
 
     def execute_ddl({:alter, %Table{} = table, changes}) do
-      statement_prefix = ["ALTER TABLE ", quote_table(table.prefix, table.name), " "]
+      statement_prefix = ["ALTER TABLE ", table_name(table.prefix, table.name), " "]
 
       # todo: There is amny issues which could arase is we want to remove primary key, this needs special attention!!!
       # below is just case when we are adding pkeys, but may things are not covered:
@@ -1038,7 +1034,7 @@ if Code.ensure_loaded?(Tds) do
           " INDEX ",
           quote_name(index.name),
           " ON ",
-          quote_table(prefix, index.table),
+          table_name(prefix, index.table),
           " ",
           "(#{intersperse_map(index.columns, ", ", &index_expr/1)})",
           # if_do(is_list(index.include), [" INCLUDE (", intersperse_map(index.columns, ", ", &index_expr/1), ")"]),
@@ -1068,7 +1064,7 @@ if Code.ensure_loaded?(Tds) do
         "DROP INDEX ",
         quote_name(index.name),
         " ON ",
-        quote_table(prefix, index.table),
+        table_name(prefix, index.table),
         if_do(index.concurrently, " LOCK=NONE"),
         ";"
       ]
@@ -1319,7 +1315,7 @@ if Code.ensure_loaded?(Tds) do
         reference_name(ref, table, name),
         " FOREIGN KEY (#{quote_name(name)})",
         " REFERENCES ",
-        quote_table(table.prefix, ref.table),
+        table_name(table.prefix, ref.table),
         "(#{quote_name(ref.column)})",
         reference_on_delete(ref.on_delete),
         reference_on_update(ref.on_update)
