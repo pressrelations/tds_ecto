@@ -287,7 +287,7 @@ if Code.ensure_loaded?(Tds) do
             ")" <> " " <> returning(returning, "INSERTED") <> "VALUES " <> insert_all(rows, 1, "")
         end
 
-      "INSERT INTO #{quote_table(prefix, table)} " <> values
+      "INSERT INTO #{table_name(prefix, table)} " <> values
     end
 
     defp on_conflict({_, _, [_ | _]}, _header) do
@@ -926,6 +926,27 @@ if Code.ensure_loaded?(Tds) do
 
     defp create_names(_prefix, _sources, pos, pos) do
       []
+    end
+
+    defp table_name(prefix, table) do
+      table
+      |> String.split(".")
+      |> case do
+        [table] ->
+          quote_table(prefix, table)
+
+        [pref, table] ->
+          quote_table(pref, table)
+
+        [database, pref, table] ->
+          quote_table(database, pref, table)
+
+        _ ->
+          error!(
+            nil,
+            "TDS addapter do not support query of external database or linked server table. Please create SYNONYM!"
+          )
+      end
     end
 
     # DDL
