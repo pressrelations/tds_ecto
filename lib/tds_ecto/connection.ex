@@ -273,6 +273,10 @@ if Code.ensure_loaded?(Tds) do
     end
 
     def insert(prefix, table, header, rows, on_conflict, returning) do
+      IO.inspect(prefix)
+      IO.inspect(table)
+      IO.inspect(quote_table(prefix, table))
+
       [] = on_conflict(on_conflict, header)
       values =
         if header == [] do
